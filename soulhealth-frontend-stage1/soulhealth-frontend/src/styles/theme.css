@@ -1,0 +1,163 @@
+/* ============================================================
+   SoulHealth 设计系统 · 「宣纸墨韵」
+   规格书指定：墨绿 #2D5F4B / 金 #C9A86C / 米白 #F5F0E8
+   签名元素：朱砂印章 + 单字圆印图标语言
+   ============================================================ */
+:root {
+  --primary: #2D5F4B;
+  --primary-deep: #1E4234;
+  --primary-tint: rgba(45, 95, 75, 0.09);
+  --gold: #C9A86C;
+  --gold-soft: #E7D8B6;
+  --gold-tint: rgba(201, 168, 108, 0.14);
+  --seal: #A6402E;            /* 朱砂印红 */
+  --bg: #F5F0E8;              /* 米白宣纸 */
+  --card: #FDFBF6;
+  --ink: #29291f;             /* 浓墨 */
+  --ink-2: #71705f;           /* 淡墨 */
+  --ink-3: #a3a291;
+  --line: rgba(122, 100, 60, 0.20);
+
+  /* 安全分级色（规格书§五） */
+  --ok: #4CAF50;
+  --warn: #FFC107;
+  --alert: #FF9800;
+  --danger: #F44336;
+
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 12px 32px -20px rgba(40, 60, 50, 0.45);
+  --shadow-soft: 0 4px 16px -10px rgba(40, 60, 50, 0.3);
+
+  --font-display: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+[data-theme='dark'] {
+  --primary: #3d7a62;
+  --primary-deep: #2a5847;
+  --primary-tint: rgba(80, 140, 115, 0.14);
+  --gold: #CFAF74;
+  --gold-soft: #8a7448;
+  --gold-tint: rgba(207, 175, 116, 0.12);
+  --seal: #c05540;
+  --bg: #101813;
+  --card: #182219;
+  --ink: #EAE4D2;
+  --ink-2: #a2a893;
+  --ink-3: #6d7263;
+  --line: rgba(207, 175, 116, 0.22);
+  --shadow: 0 14px 36px -20px rgba(0, 0, 0, 0.7);
+  --shadow-soft: 0 4px 16px -10px rgba(0, 0, 0, 0.5);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+/* 宣纸细纹 */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  opacity: 0.05; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+[data-theme='dark'] body::before { opacity: 0.08; mix-blend-mode: overlay; }
+
+h1, h2, h3, .serif { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.02em; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+::selection { background: var(--gold-tint); }
+
+/* ---------- 共用组件类 ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.section-title {
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--font-display); font-size: 17px; font-weight: 700;
+  margin: 26px 2px 12px;
+}
+.section-title::before {
+  content: ''; width: 4px; height: 16px; align-self: center;
+  background: linear-gradient(180deg, var(--gold), var(--primary));
+  border-radius: 2px;
+}
+.section-title small { font-family: var(--font-body); font-weight: 400; font-size: 12px; color: var(--ink-3); letter-spacing: 0.12em; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 22px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  border: none; color: #F7F2E7;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+  box-shadow: 0 8px 20px -10px rgba(45, 95, 75, 0.7);
+}
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.btn-block { width: 100%; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 12px; border-radius: 999px; font-size: 12px;
+  background: var(--gold-tint); color: var(--ink-2);
+  border: 1px solid var(--line);
+}
+
+/* 表单基础（阶段2起大量使用） */
+input, select, textarea {
+  font-family: inherit; font-size: 15px; color: var(--ink);
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 10px 12px; outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
+/* 无障碍与动效偏好 */
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* 🖨️ PDF 导出 / 打印专用高保真排版 */
+@media print {
+  header, footer, .bottom-nav, .export-actions, .btn, .theme-btn, .action-top-bar, .page-footer-actions, .demo-preset-bar {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+  .card, .section-card {
+    box-shadow: none !important;
+    border: 1pt solid #ccc !important;
+    page-break-inside: avoid;
+    margin-bottom: 15pt !important;
+  }
+  .page-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
