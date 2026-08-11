@@ -10,13 +10,16 @@ echo.
 
 :: 1. 检查 Python
 python --version >nul 2>&1
-if errorlevel 1 (
-    echo [错误] 未检测到 Python，请先安装 Python 3.10+
-    pause
-    exit /b 1
-)
+if errorlevel 1 goto NO_PYTHON
 echo [OK] Python 已就绪
+goto CHECK_PIP
 
+:NO_PYTHON
+echo [错误] 未检测到 Python，请先安装 Python 3.10+
+pause
+exit /b 1
+
+:CHECK_PIP
 :: 2. 安装 Python 依赖
 echo [*] 正在检查/安装 Python 依赖...
 pip install -r requirements.txt -q
@@ -24,26 +27,32 @@ echo [OK] Python 依赖已就绪
 
 :: 3. 检查 Node.js
 node --version >nul 2>&1
-if errorlevel 1 (
-    echo [错误] 未检测到 Node.js，请先安装 Node.js 18+
-    pause
-    exit /b 1
-)
+if errorlevel 1 goto NO_NODE
 echo [OK] Node.js 已就绪
+goto CHECK_FRONTEND
 
+:NO_NODE
+echo [错误] 未检测到 Node.js，请先安装 Node.js 18+
+pause
+exit /b 1
+
+:CHECK_FRONTEND
 :: 4. 检查前端依赖
 set "ROOT_DIR=%~dp0"
 set "FRONT_DIR=%~dp0soulhealth-frontend-stage1\soulhealth-frontend"
 
-if not exist "%FRONT_DIR%\node_modules" (
-    echo [*] 首次运行，正在安装前端依赖 (npm install)...
-    pushd "%FRONT_DIR%"
-    call npm install
-    popd
-) else (
-    echo [OK] 前端依赖已存在
-)
+if exist "%FRONT_DIR%\node_modules" goto FRONTEND_READY
 
+echo [*] 首次运行，正在安装前端依赖 (npm install)...
+cd /d "%FRONT_DIR%"
+call npm install
+cd /d "%ROOT_DIR%"
+goto START_BACKEND
+
+:FRONTEND_READY
+echo [OK] 前端依赖已存在
+
+:START_BACKEND
 :: 5. 启动后端 (端口 8001)
 echo [*] 启动后端服务 (端口 8001)...
 start "SoulHealth-Backend" cmd /k "cd /d "%ROOT_DIR%" && python -m uvicorn pipeline:app --host 0.0.0.0 --port 8001"
