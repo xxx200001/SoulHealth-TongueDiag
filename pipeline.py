@@ -155,6 +155,8 @@ class TCMPipeline:
             "total_g": dosage_result.get("total_g"),
             "warnings": dosage_result.get("warnings"),
             "signoff": dosage_result.get("signoff"),
+            "reason": (dosage_result.get("block") or {}).get("reason") or dosage_result.get("advice"),
+            "block": dosage_result.get("block"),
         }
 
         # 如果出方了，再次检查中西药相互作用

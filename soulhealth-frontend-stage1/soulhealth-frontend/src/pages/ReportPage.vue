@@ -57,8 +57,8 @@
             {{ store.report.dosage_result?.blocked_title || '安全高风险拦截' }}
           </div>
         </div>
-        <div class="blocked-reason"><strong>拦截原因：</strong>{{ store.report.dosage_result?.reason || store.report.dosage_result?.signoff }}</div>
-        <div class="blocked-advice"><strong>下一步：</strong>建议前往线下三甲医院中医科，由执业中医师面诊开方。</div>
+        <div class="blocked-reason"><strong>拦截原因：</strong>{{ store.report.dosage_result?.reason || store.report.dosage_result?.block?.reason || '属复杂寒热错杂证候，为保证用药安全，机器暂停自动组方' }}</div>
+        <div class="blocked-advice"><strong>下一步：</strong>建议前往线下三甲医院中医科，由执业中医师当面辨证开方。</div>
       </div>
 
       <!-- ===== OK 状态 ===== -->
