@@ -140,24 +140,44 @@
       <span v-else class="cat-done-hint">✓ 已到最后一类</span>
     </div>
 
-    <!-- 证候倾向实时推测 -->
-    <transition name="fade">
-      <div v-if="syndromePreview && answeredCount >= 3" class="syndrome-preview">
-        <div class="sp-title">📊 当前证候倾向推测</div>
-        <div class="sp-hint">基于已填 {{ answeredCount }} 项症状，初步推测：</div>
-        <div class="sp-list">
-          <div v-for="s in syndromePreview.top" :key="s.name" class="sp-item">
-            <div class="sp-row">
-              <span class="sp-name">{{ s.name }}</span>
-              <span class="sp-pct">{{ s.pct }}%</span>
-            </div>
-            <div class="sp-bar"><div class="sp-fill" :style="{ width: s.pct + '%' }"></div></div>
-            <div class="sp-evidence">{{ s.evidence }}</div>
-          </div>
-        </div>
-        <div class="sp-note">⚠ 仅为初步参考，完整辨证需结合舌诊、面诊与体检指标。</div>
+    <!-- 问诊提交与证候分析 -->
+    <div class="submit-section">
+      <div v-if="!syndromeResult && !analyzing" class="submit-box">
+        <div class="submit-count">已填 {{ answeredCount }} / {{ dimensions.length }} 项</div>
+        <button class="btn btn-primary btn-block submit-btn" :disabled="answeredCount < 3" @click="submitAnalysis">
+          🔬 提交问诊，开始证候分析
+        </button>
+        <div v-if="answeredCount < 3" class="submit-hint">至少回答 3 项才可分析</div>
       </div>
-    </transition>
+      <div v-if="analyzing" class="analyzing-box">
+        <div class="analyze-spinner"></div>
+        <div class="analyze-title">正在综合分析您的 {{ answeredCount }} 项症状数据…</div>
+        <div class="analyze-steps">
+          <div class="step-item" :class="{ done: analyzeStep >= 1 }">① 症状数据量化校验</div>
+          <div class="step-item" :class="{ done: analyzeStep >= 2 }">② 八维证型权重计算</div>
+          <div class="step-item" :class="{ done: analyzeStep >= 3 }">③ 证候倾向综合研判</div>
+        </div>
+      </div>
+      <transition name="fade">
+        <div v-if="syndromeResult" class="syndrome-preview">
+          <div class="sp-title">📊 证候倾向分析报告</div>
+          <div class="sp-hint">基于 {{ answeredCount }} 项症状问诊数据，综合分析结果如下：</div>
+          <div class="sp-primary">当前表现更偏向 <strong>{{ syndromeResult.top[0]?.name }}</strong> 证候特征</div>
+          <div class="sp-list">
+            <div v-for="s in syndromeResult.top" :key="s.name" class="sp-item">
+              <div class="sp-row">
+                <span class="sp-name">{{ s.name }}</span>
+                <span class="sp-pct">{{ s.pct }}%</span>
+              </div>
+              <div class="sp-bar"><div class="sp-fill" :style="{ width: s.pct + '%' }"></div></div>
+              <div class="sp-evidence">相关表现：{{ s.evidence }}</div>
+            </div>
+          </div>
+          <div class="sp-note">⚠ 仅为症状问诊初步推测，完整辨证需结合舌诊、面诊与体检指标。</div>
+          <button class="btn btn-sm reset-btn" @click="syndromeResult = null">重新修改答案</button>
+        </div>
+      </transition>
+    </div>
 
     <!-- 跨页步骤引导（共享组件） -->
     <StepGuide />
@@ -480,9 +500,12 @@ const EVIDENCE_LABELS = {
 
 const answeredCount = computed(() => Object.keys(store.symptoms).length)
 
-const syndromePreview = computed(() => {
+const analyzing = ref(false)
+const analyzeStep = ref(0)
+const syndromeResult = ref(null)
+
+function computeSyndrome() {
   const symp = store.symptoms
-  if (Object.keys(symp).length < 3) return null
   const scores = {}
   SYNDROME_NAMES.forEach(n => { scores[n] = 0 })
   for (const rule of SYNDROME_RULES) {
@@ -504,7 +527,26 @@ const syndromePreview = computed(() => {
     .slice(0, 3)
   ranked.forEach(s => { s.evidence = EVIDENCE_LABELS[s.name] || '' })
   return { top: ranked }
-})
+}
+
+async function submitAnalysis() {
+  analyzing.value = true
+  analyzeStep.value = 0
+  syndromeResult.value = null
+  // 步骤式动画，让用户感受到“系统在认真分析”
+  await delay(800);  analyzeStep.value = 1
+  await delay(900);  analyzeStep.value = 2
+  await delay(1000); analyzeStep.value = 3
+  await delay(600)
+  syndromeResult.value = computeSyndrome()
+  analyzing.value = false
+  // 滚动到结果区域
+  setTimeout(() => {
+    document.querySelector('.syndrome-preview')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 100)
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)) }
 
 onMounted(async () => {
   loading.value = true
@@ -803,7 +845,71 @@ onMounted(async () => {
   .classify-btn { padding: 7px 10px; }
 }
 
-/* ===== 证候倒向推测预览 ===== */
+/* ===== 证候分析提交区 ===== */
+.submit-section {
+  margin: 24px 0 8px;
+}
+.submit-box {
+  text-align: center;
+  padding: 16px 0;
+  border-top: 1px dashed var(--line);
+}
+.submit-count {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.submit-btn {
+  font-size: 16px;
+  padding: 14px 24px;
+}
+.submit-hint {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+
+/* 分析动画 */
+.analyzing-box {
+  text-align: center;
+  padding: 30px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--primary-tint);
+}
+.analyze-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--line);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.analyze-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary-deep);
+  margin-bottom: 14px;
+}
+.analyze-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.step-item {
+  font-size: 13px;
+  color: var(--ink-3);
+  transition: all 0.3s ease;
+}
+.step-item.done {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* 结果面板 */
 .syndrome-preview {
   margin: 20px 0 4px;
   padding: 16px;
@@ -821,7 +927,21 @@ onMounted(async () => {
 .sp-hint {
   font-size: 12px;
   color: var(--ink-2);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+}
+.sp-primary {
+  font-size: 16px;
+  color: var(--primary-deep);
+  font-weight: 700;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--primary);
+}
+.sp-primary strong {
+  color: var(--primary);
+  font-size: 18px;
 }
 .sp-list {
   display: flex;
@@ -870,5 +990,8 @@ onMounted(async () => {
   font-size: 11px;
   color: var(--ink-3);
   font-style: italic;
+}
+.reset-btn {
+  margin-top: 12px;
 }
 </style>
