@@ -442,7 +442,7 @@ onMounted(async () => {
 .page-container {
   max-width: 680px;
   margin: 0 auto;
-  padding: 16px 16px 100px;
+  padding: 16px 16px 60px;
 }
 
 /* ===== 顶部进度条 ===== */
