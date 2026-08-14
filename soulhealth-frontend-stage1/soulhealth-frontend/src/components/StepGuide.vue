@@ -62,19 +62,26 @@ function goPrev() { if (currentIdx.value > 0) router.push(steps.value[currentIdx
 }
 
 .sg-link {
-  background: none;
-  border: none;
-  color: var(--ink-2);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  padding: 4px 0;
-  transition: color 0.2s;
+  padding: 7px 16px;
+  transition: all 0.2s;
   text-decoration: none;
   white-space: nowrap;
 }
-.sg-link:hover { color: var(--primary); }
-.sg-next { color: var(--primary); font-weight: 600; }
+.sg-link:hover { border-color: var(--primary); color: var(--primary); }
+.sg-next {
+  color: #F7F2E7;
+  background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 3px 10px -4px rgba(45, 95, 75, 0.45);
+}
 
 .sg-dots {
   display: flex;
