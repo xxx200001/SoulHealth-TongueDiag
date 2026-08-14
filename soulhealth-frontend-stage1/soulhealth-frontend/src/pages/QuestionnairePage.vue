@@ -140,6 +140,25 @@
       <span v-else class="cat-done-hint">✓ 已到最后一类</span>
     </div>
 
+    <!-- 证候倾向实时推测 -->
+    <transition name="fade">
+      <div v-if="syndromePreview && answeredCount >= 3" class="syndrome-preview">
+        <div class="sp-title">📊 当前证候倾向推测</div>
+        <div class="sp-hint">基于已填 {{ answeredCount }} 项症状，初步推测：</div>
+        <div class="sp-list">
+          <div v-for="s in syndromePreview.top" :key="s.name" class="sp-item">
+            <div class="sp-row">
+              <span class="sp-name">{{ s.name }}</span>
+              <span class="sp-pct">{{ s.pct }}%</span>
+            </div>
+            <div class="sp-bar"><div class="sp-fill" :style="{ width: s.pct + '%' }"></div></div>
+            <div class="sp-evidence">{{ s.evidence }}</div>
+          </div>
+        </div>
+        <div class="sp-note">⚠ 仅为初步参考，完整辨证需结合舌诊、面诊与体检指标。</div>
+      </div>
+    </transition>
+
     <!-- 跨页步骤引导（共享组件） -->
     <StepGuide />
   </div>
@@ -424,6 +443,68 @@ function loadPreset(type) {
   }
   store.setSymptoms(PRESET_MAP[type] || {})
 }
+
+// ===== 证候倒向实时推测（前端轻量版，与后端 syndrome_weight_engine 规则对齐） =====
+const SYNDROME_RULES = [
+  { key: '怕冷', w: { '阳虚': 2.0 } },
+  { key: '怕热', w: { '阴虚': 1.0, '湿热': 1.0 } },
+  { key: '疲劳', w: { '脾虚': 1.0, '气血两虚': 1.0, '阳虚': 0.5 } },
+  { key: '食欲差', w: { '脾虚': 1.5 } },
+  { key: '腹胀', w: { '脾虚': 1.0, '肝郁': 1.0 } },
+  { key: '大便性状', w: { '脾虚': 1.0, '阳虚': 0.5 }, minVal: 3 },
+  { key: '尿黄', w: { '湿热': 1.5 }, minVal: 3 },
+  { key: '夜尿多', w: { '阳虚': 1.0 }, minVal: 3 },
+  { key: '情绪抑郁', w: { '肝郁': 2.0 } },
+  { key: '烦躁易怒', w: { '肝郁': 1.5, '阴虚': 0.5 } },
+  { key: '入睡困难', w: { '肝郁': 1.0, '阴虚': 1.0 } },
+  { key: '刺痛固定', w: { '血瘀': 2.0 } },
+  { key: '胀痛走窜', w: { '肝郁': 1.0 } },
+  { key: '自汗', w: { '脾虚': 1.0, '气血两虚': 0.5 } },
+  { key: '盗汗', w: { '阴虚': 2.0 } },
+  { key: '口苦', w: { '湿热': 1.0, '肝郁': 0.5 }, minVal: 3 },
+  { key: '经期血块', w: { '血瘀': 1.5 } },
+  { key: '经量少色淡', w: { '气血两虚': 1.5 } },
+  { key: '经前乳胀', w: { '肝郁': 1.5 } },
+]
+const SYNDROME_NAMES = ['肝郁', '脾虚', '痰湿', '湿热', '阴虚', '阳虚', '气血两虚', '血瘀']
+const EVIDENCE_LABELS = {
+  '肝郁': '情绪抑郁、胀痛、失眠',
+  '脾虚': '疑劳、食欲差、自汗',
+  '痰湿': '腹胀、苔厥、体胖',
+  '湿热': '口苦、尿黄、怕热',
+  '阴虚': '盗汗、口干、怕热',
+  '阳虚': '怕冷、夜尿、便溏',
+  '气血两虚': '疲劳、经少色淡',
+  '血瘀': '刺痛固定、经血有块',
+}
+
+const answeredCount = computed(() => Object.keys(store.symptoms).length)
+
+const syndromePreview = computed(() => {
+  const symp = store.symptoms
+  if (Object.keys(symp).length < 3) return null
+  const scores = {}
+  SYNDROME_NAMES.forEach(n => { scores[n] = 0 })
+  for (const rule of SYNDROME_RULES) {
+    const val = symp[rule.key] || 0
+    const threshold = rule.minVal || 3
+    if (val >= threshold) {
+      const factor = Math.min(1.0, val / 10)
+      for (const [syn, wt] of Object.entries(rule.w)) {
+        scores[syn] = (scores[syn] || 0) + wt * factor
+      }
+    }
+  }
+  const total = Object.values(scores).reduce((a, b) => a + b, 0)
+  if (total < 1.5) return null
+  const ranked = SYNDROME_NAMES
+    .map(n => ({ name: n, score: scores[n], pct: total > 0 ? Math.round(scores[n] / total * 100) : 0 }))
+    .sort((a, b) => b.score - a.score)
+    .filter(s => s.pct > 5)
+    .slice(0, 3)
+  ranked.forEach(s => { s.evidence = EVIDENCE_LABELS[s.name] || '' })
+  return { top: ranked }
+})
 
 onMounted(async () => {
   loading.value = true
@@ -720,5 +801,74 @@ onMounted(async () => {
 @media (max-width: 480px) {
   .choice-btn { padding: 7px 12px; font-size: 12px; }
   .classify-btn { padding: 7px 10px; }
+}
+
+/* ===== 证候倒向推测预览 ===== */
+.syndrome-preview {
+  margin: 20px 0 4px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary-tint), var(--gold-tint));
+  border: 1px solid var(--line);
+}
+.sp-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-deep);
+  margin-bottom: 4px;
+}
+.sp-hint {
+  font-size: 12px;
+  color: var(--ink-2);
+  margin-bottom: 12px;
+}
+.sp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.sp-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.sp-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: var(--font-display);
+}
+.sp-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+.sp-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--gold));
+  transition: width 0.4s ease;
+}
+.sp-evidence {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.sp-note {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink-3);
+  font-style: italic;
 }
 </style>
