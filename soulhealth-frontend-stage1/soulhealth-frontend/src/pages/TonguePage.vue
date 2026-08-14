@@ -180,10 +180,8 @@
       <div v-if="faceError" class="error-box">❌ {{ faceError }}</div>
     </div>
 
-    <div class="page-footer-actions">
-      <router-link to="/lab" class="btn">◀ 返回体检上传</router-link>
-      <router-link to="/questionnaire" class="btn btn-primary">下一步：智能问诊 ➔</router-link>
-    </div>
+    <!-- 跨页步骤引导 -->
+    <StepGuide />
   </div>
 </template>
 
@@ -191,6 +189,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { usePatientStore } from '../store/patient'
 import { api } from '../api'
+import StepGuide from '../components/StepGuide.vue'
 
 const store = usePatientStore()
 
@@ -487,5 +486,4 @@ onUnmounted(() => {
   color: var(--danger); margin-top: 8px;
 }
 
-.page-footer-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 30px; }
 </style>

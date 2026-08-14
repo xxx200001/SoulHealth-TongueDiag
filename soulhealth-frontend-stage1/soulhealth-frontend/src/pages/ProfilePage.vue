@@ -163,16 +163,15 @@
       </div>
     </div>
 
-    <div class="page-footer-actions">
-      <router-link to="/lab" class="btn">◀ 返回体检上传</router-link>
-      <router-link to="/questionnaire" class="btn btn-primary">下一步：智能问诊 ➔</router-link>
-    </div>
+    <!-- 跨页步骤引导 -->
+    <StepGuide />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { usePatientStore } from '../store/patient'
+import StepGuide from '../components/StepGuide.vue'
 
 const store = usePatientStore()
 
@@ -431,10 +430,4 @@ function removeDrug(idx) {
   border-color: var(--primary);
 }
 
-.page-footer-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 30px;
-}
 </style>

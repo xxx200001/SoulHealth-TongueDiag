@@ -56,7 +56,7 @@
             <div
               v-for="(dim, qIdx) in currentGroup"
               :key="dim.key"
-              class="card question-card"
+              class="question-card"
               :class="{ answered: store.symptoms[dim.key] != null }"
             >
               <div class="q-number">Q{{ qIdx + 1 }}</div>
@@ -117,42 +117,38 @@
       </transition>
     </div>
 
-    <!-- 底部导航栏 -->
-    <div class="wizard-nav">
+    <!-- 分类内切换（内联按钮） -->
+    <div class="cat-nav">
       <button
         v-if="currentCategoryIndex > 0"
         class="btn btn-back"
         @click="prevCategory"
       >
-        ◀ 上一步
+        ◀ 上一类
       </button>
-      <router-link v-else to="/" class="btn btn-back">◀ 返回首页</router-link>
+      <span v-else></span>
 
-      <button class="btn btn-skip" @click="skipCategory">
-        跳过此项
-      </button>
+      <span class="cat-nav-hint">{{ currentCategory }} {{ currentCategoryIndex + 1 }}/{{ categoryList.length }}</span>
 
       <button
         v-if="currentCategoryIndex < categoryList.length - 1"
-        class="btn btn-primary btn-next"
+        class="btn btn-sm"
         @click="nextCategory"
       >
-        下一步 ▶
+        下一类 ▶
       </button>
-      <router-link
-        v-else
-        to="/report"
-        class="btn btn-primary btn-next"
-      >
-        完成，生成方案 ➔
-      </router-link>
+      <span v-else class="cat-done-hint">✓ 已到最后一类</span>
     </div>
+
+    <!-- 跨页步骤引导（共享组件） -->
+    <StepGuide />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import StepGuide from '../components/StepGuide.vue'
 import { usePatientStore } from '../store/patient'
 import { api } from '../api'
 
@@ -565,25 +561,30 @@ onMounted(async () => {
 }
 .spinner { font-size: 32px; margin-bottom: 10px; }
 
-/* ===== 问题卡片 ===== */
+/* ===== 问题卡片（扁平融入式） ===== */
 .question-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0;
 }
 .question-card {
   display: flex;
   gap: 14px;
-  padding: 18px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.25s ease;
+}
+.question-card:last-child {
+  border-bottom: none;
 }
 .question-card.answered {
-  border-color: rgba(45, 95, 75, 0.25);
-  box-shadow: 0 4px 16px -8px rgba(45, 95, 75, 0.18);
+  background: var(--primary-tint);
+  border-radius: var(--radius-sm);
+  margin: 2px 0;
 }
 .q-number {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--primary-tint);
   color: var(--primary);
@@ -665,40 +666,38 @@ onMounted(async () => {
   gap: 4px;
 }
 
-/* ===== 底部导航栏 ===== */
-.wizard-nav {
-  position: fixed;
-  bottom: 56px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 680px;
+/* ===== 分类内联切换 ===== */
+.cat-nav {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: var(--card);
-  border-top: 1px solid var(--line);
-  box-shadow: 0 -4px 20px -10px rgba(0,0,0,0.12);
-  z-index: 50;
+  justify-content: space-between;
+  margin: 20px 0 8px;
+  padding: 0 2px;
 }
-.btn-back {
-  flex: 0 0 auto;
-}
-.btn-skip {
-  flex: 0 0 auto;
-  background: none;
-  border: none;
+.cat-nav-hint {
+  font-size: 12px;
   color: var(--ink-3);
+}
+.cat-done-hint {
+  font-size: 12px;
+  color: var(--gold);
+  font-weight: 600;
+}
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
   font-size: 13px;
   cursor: pointer;
-  padding: 8px 12px;
-  transition: color 0.2s;
+  transition: all 0.15s ease;
 }
-.btn-skip:hover { color: var(--ink); }
-.btn-next {
-  flex: 1;
-  text-align: center;
+.btn-sm:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* ===== 过渡动画 ===== */
@@ -721,6 +720,5 @@ onMounted(async () => {
 @media (max-width: 480px) {
   .choice-btn { padding: 7px 12px; font-size: 12px; }
   .classify-btn { padding: 7px 10px; }
-  .wizard-nav { bottom: 48px; }
 }
 </style>

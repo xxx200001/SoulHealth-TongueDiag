@@ -124,10 +124,8 @@
       </div>
     </div>
 
-    <div class="page-footer-actions">
-      <router-link to="/profile" class="btn">前往个人信息登记</router-link>
-      <router-link to="/tongue" class="btn btn-primary">下一步：舌面诊拍摄 ➔</router-link>
-    </div>
+    <!-- 跨页步骤引导 -->
+    <StepGuide />
   </div>
 </template>
 
@@ -136,6 +134,7 @@ import { ref, computed } from 'vue'
 import { usePatientStore } from '../store/patient'
 import { api } from '../api'
 import { LAB_GROUPS, GROUP_BY_NAME } from '../constants/indicators'
+import StepGuide from '../components/StepGuide.vue'
 
 const store = usePatientStore()
 
@@ -517,10 +516,4 @@ function loadPreset(type) {
   background: rgba(244, 67, 54, 0.1);
 }
 
-.page-footer-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 30px;
-}
 </style>
