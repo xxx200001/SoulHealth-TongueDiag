@@ -12,7 +12,7 @@ const steps = computed(() => [
   { to: '/profile', char: '人', name: '基础信息与用药', hint: '年龄 · 身高体重 · 过敏 · 西药', done: store.profileDone },
   { to: '/lab', char: '检', name: '体检指标录入', hint: '25 类指标 · 自动异常分级', done: store.labsDone },
   { to: '/tongue', char: '舌', name: '舌面诊拍摄', hint: '舌象 / 面色量化（可选）', done: store.tongueDone },
-  { to: '/questionnaire', char: '问', name: '症状问诊问卷', hint: '0–10 滑块量表', done: store.symptomsDone },
+  { to: '/questionnaire', char: '问', name: '症状问诊问卷', hint: '分步问答 · 逐类作答', done: store.symptomsDone },
 ])
 const doneCount = computed(() => steps.value.filter((s) => s.done).length)
 
@@ -20,7 +20,7 @@ const doneCount = computed(() => steps.value.filter((s) => s.done).length)
 const entries = [
   { to: '/lab', char: '检', title: '体检上传', desc: '指标解析 · G0–G3 分级' },
   { to: '/tongue', char: '诊', title: '舌面诊', desc: '引导拍摄 · 质量校验' },
-  { to: '/questionnaire', char: '问', title: '智能问诊', desc: '症状量表 · 分类作答' },
+  { to: '/questionnaire', char: '问', title: '智能问诊', desc: '问诊问答 · 分步引导' },
   { to: '/timeline', char: '案', title: '历史方案', desc: '终身病历时间轴' },
 ]
 

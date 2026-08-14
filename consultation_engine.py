@@ -13,29 +13,97 @@ from datetime import datetime, timedelta
 
 VERSION = "0.1.0"
 
-# 规格书要求的固定采集维度（必须量化打分0-10）
+# ===== 三种问诊题型 =====
+# type="subjective"      → 五级主观选择，后台映射 0/2/5/7/10
+# type="quantifiable"    → 事实量化，自带 options
+# type="classification"  → 分类选择（非严重度），自带 options
 SYMPTOM_DIMENSIONS = [
-    {"key": "入睡困难", "label": "睡眠质量", "prompt": "近一周入睡困难程度", "category": "睡眠"},
-    {"key": "食欲差", "label": "食欲", "prompt": "近一周食欲减退程度", "category": "消化"},
-    {"key": "腹胀", "label": "腹胀", "prompt": "近一周腹胀程度", "category": "消化"},
-    {"key": "便溏", "label": "大便偏稀", "prompt": "近一周大便偏稀/溏薄程度", "category": "二便"},
-    {"key": "便秘", "label": "大便偏干", "prompt": "近一周排便困难程度", "category": "二便"},
-    {"key": "尿黄", "label": "小便黄", "prompt": "近一周小便颜色偏深程度", "category": "二便"},
-    {"key": "夜尿多", "label": "夜尿", "prompt": "近一周夜间起夜次数(0=无,10=≥5次)", "category": "二便"},
-    {"key": "怕冷", "label": "怕冷", "prompt": "近一周畏寒肢冷程度", "category": "寒热"},
-    {"key": "怕热", "label": "怕热", "prompt": "近一周怕热/手足心热程度", "category": "寒热"},
-    {"key": "情绪抑郁", "label": "情绪低落", "prompt": "近一周情绪低落/抑郁程度", "category": "情志"},
-    {"key": "烦躁易怒", "label": "烦躁易怒", "prompt": "近一周烦躁易怒程度", "category": "情志"},
-    {"key": "疲劳", "label": "疲劳乏力", "prompt": "近一周疲劳乏力程度", "category": "体能"},
-    {"key": "自汗", "label": "白天出汗", "prompt": "近一周白天非运动出汗程度", "category": "汗出"},
-    {"key": "盗汗", "label": "夜间盗汗", "prompt": "近一周睡眠中出汗程度", "category": "汗出"},
-    {"key": "刺痛固定", "label": "固定刺痛", "prompt": "近一周有无固定位置刺痛(0=无,10=剧烈)", "category": "疼痛"},
-    {"key": "胀痛走窜", "label": "走窜胀痛", "prompt": "近一周有无胀痛/走窜性疼痛", "category": "疼痛"},
-    {"key": "口苦", "label": "口苦", "prompt": "近一周晨起口苦程度", "category": "口味"},
-    # 经期相关（仅女性）
-    {"key": "经期血块", "label": "经血有块", "prompt": "近一周期经血夹块程度", "category": "经期", "sex": "F"},
-    {"key": "经量少色淡", "label": "经量少色淡", "prompt": "近一周期经量偏少/色淡程度", "category": "经期", "sex": "F"},
-    {"key": "经前乳胀", "label": "经前乳胀", "prompt": "经前乳房胀痛程度", "category": "经期", "sex": "F"},
+    # ---- 睡眠 ----
+    {"key": "入睡困难", "label": "入睡困难", "type": "subjective",
+     "prompt": "过去 7 天，你入睡困难的情况有多明显？", "category": "睡眠"},
+    {"key": "入睡时长", "label": "入睡所需时间", "type": "quantifiable",
+     "prompt": "通常需要多久才能入睡？", "category": "睡眠",
+     "options": [
+         {"label": "≤15 分钟", "value": 0},
+         {"label": "16–30 分钟", "value": 2},
+         {"label": "31–60 分钟", "value": 5},
+         {"label": "1–2 小时", "value": 7},
+         {"label": ">2 小时", "value": 10},
+     ]},
+    {"key": "夜尿多", "label": "夜间起夜", "type": "quantifiable",
+     "prompt": "平均每晚起夜几次？", "category": "睡眠",
+     "options": [
+         {"label": "0 次", "value": 0},
+         {"label": "1 次", "value": 2},
+         {"label": "2 次", "value": 5},
+         {"label": "3 次", "value": 7},
+         {"label": "4 次及以上", "value": 10},
+     ]},
+    # ---- 消化 ----
+    {"key": "食欲差", "label": "食欲减退", "type": "subjective",
+     "prompt": "过去 7 天，你的食欲减退有多明显？", "category": "消化"},
+    {"key": "腹胀", "label": "腹胀", "type": "subjective",
+     "prompt": "过去 7 天，你的腹胀感有多明显？", "category": "消化"},
+    # ---- 二便 ----
+    {"key": "大便性状", "label": "大便情况", "type": "classification",
+     "prompt": "最近一周，你的大便更接近哪种情况？", "category": "二便",
+     "options": [
+         {"label": "正常成形", "value": 0},
+         {"label": "偏稀/不成形", "value": 3},
+         {"label": "水样泄泻", "value": 7},
+         {"label": "偏干/费力", "value": 4},
+         {"label": "干结便秘", "value": 8},
+         {"label": "时稀时干交替", "value": 5},
+     ]},
+    {"key": "尿黄", "label": "小便颜色", "type": "classification",
+     "prompt": "最近一周，你的小便颜色更接近？", "category": "二便",
+     "options": [
+         {"label": "清澈透明", "value": 0},
+         {"label": "淡黄正常", "value": 1},
+         {"label": "深黄", "value": 5},
+         {"label": "浓茶色", "value": 8},
+         {"label": "偏红/带血", "value": 10},
+     ]},
+    # ---- 寒热 ----
+    {"key": "怕冷", "label": "畏寒怕冷", "type": "subjective",
+     "prompt": "过去 7 天，你的畏寒怕冷感觉有多明显？", "category": "寒热"},
+    {"key": "怕热", "label": "怕热烦热", "type": "subjective",
+     "prompt": "过去 7 天，你的怕热或手足心发热有多明显？", "category": "寒热"},
+    # ---- 情志 ----
+    {"key": "情绪抑郁", "label": "情绪低落", "type": "subjective",
+     "prompt": "过去 7 天，你心情低落或闷闷不乐的程度有多明显？", "category": "情志"},
+    {"key": "烦躁易怒", "label": "急躁易怒", "type": "subjective",
+     "prompt": "过去 7 天，你急躁、容易发怒的情况有多明显？", "category": "情志"},
+    # ---- 体能 ----
+    {"key": "疲劳", "label": "疲劳乏力", "type": "subjective",
+     "prompt": "过去 7 天，你的疲劳感有多明显？", "category": "体能"},
+    # ---- 汗出 ----
+    {"key": "自汗", "label": "白天出汗", "type": "subjective",
+     "prompt": "过去 7 天，白天不因运动也出汗的情况有多明显？", "category": "汗出"},
+    {"key": "盗汗", "label": "夜间盗汗", "type": "subjective",
+     "prompt": "过去 7 天，睡后出汗、醒后汗止的情况有多明显？", "category": "汗出"},
+    # ---- 疼痛 ----
+    {"key": "刺痛固定", "label": "固定刺痛", "type": "subjective",
+     "prompt": "过去 7 天，你有固定位置的针刺样疼痛吗？", "category": "疼痛"},
+    {"key": "胀痛走窜", "label": "走窜胀痛", "type": "subjective",
+     "prompt": "过去 7 天，你有位置不固定的胀痛吗？", "category": "疼痛"},
+    # ---- 口味 ----
+    {"key": "口苦", "label": "口苦口干", "type": "classification",
+     "prompt": "最近一周晨起时，你的口腔感觉更接近？", "category": "口味",
+     "options": [
+         {"label": "正常", "value": 0},
+         {"label": "口干", "value": 3},
+         {"label": "口苦", "value": 5},
+         {"label": "口干且口苦", "value": 7},
+         {"label": "口中黏腻", "value": 6},
+     ]},
+    # ---- 经期（仅女性） ----
+    {"key": "经期血块", "label": "月经血块", "type": "subjective",
+     "prompt": "近一周期，经血中出现血块的情况有多明显？", "category": "经期", "sex": "F"},
+    {"key": "经量少色淡", "label": "经量稀少", "type": "subjective",
+     "prompt": "近一周期，月经量减少或色淡的情况有多明显？", "category": "经期", "sex": "F"},
+    {"key": "经前乳胀", "label": "经前乳胀", "type": "subjective",
+     "prompt": "经前乳房胀痛不适的感觉有多明显？", "category": "经期", "sex": "F"},
 ]
 
 # 随访周期配置（按慢病标签）
@@ -54,15 +122,15 @@ class ConsultationEngine:
     """双向问诊引擎"""
 
     def get_questionnaire(self, sex="M", chronic_tags=None):
-        """根据性别返回症状采集量表"""
+        """根据性别返回症状问诊量表（三种题型）"""
         items = [d for d in SYMPTOM_DIMENSIONS
                  if "sex" not in d or d["sex"] == sex]
         return {
             "version": VERSION,
             "dimensions": items,
             "total": len(items),
-            "instruction": "请对每项症状按0-10分打分，"
-                           "0=完全没有，5=中等程度，10=非常严重",
+            "instruction": "请根据过去 7 天的实际情况完成以下问题。"
+                           "没有标准答案，选择最符合你的情况即可。",
         }
 
     def validate_answers(self, answers: dict, sex="M") -> dict:
