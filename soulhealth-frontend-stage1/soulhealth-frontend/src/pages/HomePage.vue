@@ -7,6 +7,18 @@ const router = useRouter()
 const store = usePatientStore()
 const showFollowup = ref(true) // 随访提醒浮动通知条（规格书§三 页面1）
 
+// 动态计算距上次调理天数（从 history 最新记录的 date 字段算）
+const daysSinceLastVisit = computed(() => {
+  if (!store.history || store.history.length === 0) return -1
+  const lastDate = new Date(store.history[0].date)
+  if (isNaN(lastDate.getTime())) return -1
+  const now = new Date()
+  return Math.floor((now - lastDate) / (1000 * 60 * 60 * 24))
+})
+
+// 是否显示随访提醒（有历史记录才显示）
+const shouldShowFollowup = computed(() => showFollowup.value && daysSinceLastVisit.value >= 0)
+
 // 生成方案的四步采集清单（用药登记并入个人信息页）
 const steps = computed(() => [
   { to: '/profile', char: '人', name: '基础信息与用药', hint: '年龄 · 身高体重 · 过敏 · 西药', done: store.profileDone },
@@ -33,11 +45,11 @@ function generate() {
   <div>
     <!-- 随访提醒 -->
     <transition name="slide">
-      <div v-if="showFollowup" class="notice">
+      <div v-if="shouldShowFollowup" class="notice">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 9.5a6 6 0 0 1 12 0c0 4.2 1.8 5.3 1.8 5.3H4.2S6 13.7 6 9.5ZM10 18.5a2 2 0 0 0 4 0" />
         </svg>
-        <span>随访提醒：距上次调理已 14 天，建议复评体质变化</span>
+        <span>随访提醒：距上次调理已 {{ daysSinceLastVisit }} 天，建议复评体质变化</span>
         <button aria-label="关闭提醒" @click="showFollowup = false">✕</button>
       </div>
     </transition>
