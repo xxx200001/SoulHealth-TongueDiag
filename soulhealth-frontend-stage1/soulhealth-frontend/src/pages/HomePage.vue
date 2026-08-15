@@ -28,12 +28,20 @@ const steps = computed(() => [
 ])
 const doneCount = computed(() => steps.value.filter((s) => s.done).length)
 
-// 四个入口卡片
+// 中医辨证溯源入口
 const entries = [
   { to: '/lab', char: '检', title: '体检上传', desc: '指标解析 · G0–G3 分级' },
   { to: '/tongue', char: '诊', title: '舌面诊', desc: '引导拍摄 · 质量校验' },
   { to: '/questionnaire', char: '问', title: '智能问诊', desc: '问诊问答 · 分步引导' },
   { to: '/timeline', char: '案', title: '历史方案', desc: '终身病历时间轴' },
+]
+
+// 生物计算平台入口
+const bioEntries = [
+  { to: '/archive', char: '档', title: '健康档案', desc: '档案管理 · 身份匹配' },
+  { to: '/archive', char: '析', title: 'AI 分析', desc: 'Agent 分析 · 生物计算' },
+  { to: '/archive', char: '答', title: '健康问答', desc: '档案问答 · 趋势分析' },
+  { to: '/archive', char: '报', title: '健康报告', desc: 'DOCX 报告 · 代茶饮' },
 ]
 
 function generate() {
@@ -60,9 +68,9 @@ function generate() {
         <circle cx="100" cy="100" r="82" fill="none" stroke="currentColor" stroke-width="11"
           stroke-linecap="round" stroke-dasharray="356 160" transform="rotate(-60 100 100)" />
       </svg>
-      <p class="hero-tag">辨证论治 <i>·</i> 四维溯源</p>
+      <p class="hero-tag">辨证溯源 <i>·</i> 生物计算</p>
       <h1>今日调理，<br />从了解自己开始</h1>
-      <p class="hero-sub">录入体检、舌象与症状，一次生成个人专属组方、毒理鉴定与生活干预方案。</p>
+      <p class="hero-sub">融合中医辨证与现代生物计算，生成个人专属健康分析、组方与生活干预方案。</p>
     </section>
 
     <!-- 方案生成进度 -->
@@ -89,8 +97,8 @@ function generate() {
       <p v-if="!store.readyToGenerate" class="gen-hint">需先完成「基础信息」与「症状问卷」</p>
     </section>
 
-    <!-- 快捷入口 -->
-    <h2 class="section-title">快捷入口 <small>ENTRANCES</small></h2>
+    <!-- 中医辨证溯源入口 -->
+    <h2 class="section-title">中医辨证溯源 <small>TCM DIAGNOSIS</small></h2>
     <section class="grid">
       <router-link v-for="e in entries" :key="e.to" :to="e.to" class="card entry">
         <span class="medal lg serif">{{ e.char }}</span>
@@ -99,7 +107,17 @@ function generate() {
       </router-link>
     </section>
 
-    <p class="foot serif">以证为纲 · 溯源而治</p>
+    <!-- 生物计算平台入口 -->
+    <h2 class="section-title">智能健康分析 <small>BIOCOMPUTE</small></h2>
+    <section class="grid">
+      <router-link v-for="e in bioEntries" :key="e.char" :to="e.to" class="card entry bio-entry">
+        <span class="medal lg serif bio-medal">{{ e.char }}</span>
+        <b>{{ e.title }}</b>
+        <small>{{ e.desc }}</small>
+      </router-link>
+    </section>
+
+    <p class="foot serif">以证为纲 · 溯源而治 · 生物计算</p>
   </div>
 </template>
 
@@ -188,6 +206,13 @@ function generate() {
   background: radial-gradient(circle at 32% 28%, #3d7a62, var(--primary-deep));
   border: none;
   box-shadow: inset 0 0 0 1px rgba(231, 216, 182, 0.28), 0 8px 16px -8px rgba(45, 95, 75, 0.6);
+}
+.medal.lg.bio-medal {
+  background: radial-gradient(circle at 32% 28%, #3d5a8a, #1a3a6a);
+  box-shadow: inset 0 0 0 1px rgba(180, 200, 240, 0.28), 0 8px 16px -8px rgba(40, 60, 120, 0.6);
+}
+.bio-entry {
+  border-left: 3px solid rgba(60, 100, 180, 0.3);
 }
 
 .foot {

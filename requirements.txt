@@ -1,8 +1,20 @@
-fastapi>=0.100.0
-uvicorn>=0.20.0
+# ═══ SOULHEALTH AI 健康科研平台 ═══
+# 融合依赖：中医辨证溯源 + 生物计算
+
+# —— 服务层（必装）——
+fastapi>=0.110
+uvicorn>=0.29
 pydantic>=2.0.0
+python-multipart>=0.0.9
+
+# —— 中医辨证溯源引擎 ——
 opencv-python-headless>=4.8.0
 numpy>=1.24.0
 Pillow>=10.0.0
+
+# —— 认证 ——
 bcrypt>=4.0.0
 PyJWT>=2.8.0
+
+# —— 真实 LLM 抽取（MOCK 模式可不装）——
+# anthropic>=0.34

@@ -8,3 +8,7 @@ dist/
 .idea/
 .vscode/
 *.egg-info/
+.env
+data/uploads/
+data/reports/
+_repo_bio_copy/

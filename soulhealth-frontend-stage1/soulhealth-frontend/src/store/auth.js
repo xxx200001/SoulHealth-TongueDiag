@@ -1,4 +1,4 @@
-// 认证状态管理 — JWT + 用户信息
+// 认证状态管理 — 统一使用 bio 认证体系（username + password + RBAC）
 import { defineStore } from 'pinia'
 import { api } from '../api'
 import { usePatientStore } from './patient'
@@ -11,19 +11,22 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isLoggedIn: (state) => !!state.token,
-    displayName: (state) => state.user?.nickname || state.user?.phone || '游客',
-    authHeaders: (state) => state.token ? { Authorization: `Bearer ${state.token}` } : {},
+    displayName: (state) =>
+      state.user?.display_name || state.user?.username || '游客',
+    isAdmin: (state) => state.user?.role === 'admin',
+    authHeaders: (state) =>
+      state.token ? { Authorization: `Bearer ${state.token}` } : {},
   },
 
   actions: {
-    async register(phone, password, nickname) {
-      const res = await api.register({ phone, password, nickname })
+    async register(username, password, displayName) {
+      const res = await api.register({ username, password, display_name: displayName })
       this._setAuth(res)
       return res
     },
 
-    async login(phone, password) {
-      const res = await api.login({ phone, password })
+    async login(username, password) {
+      const res = await api.login({ username, password })
       this._setAuth(res)
       return res
     },
@@ -55,7 +58,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = res.user
       localStorage.setItem('sh_token', res.token)
       localStorage.setItem('sh_user', JSON.stringify(res.user))
-      
+
       const patientStore = usePatientStore()
       patientStore.loadUserSession()
     },

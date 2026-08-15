@@ -36,7 +36,7 @@ onMounted(async () => {
       <span class="seal serif">溯<br />源</span>
       <span class="names">
         <b class="en">SOULHEALTH</b>
-        <b class="zh serif">中医辨证溯源</b>
+        <b class="zh serif">AI 健康科研平台</b>
       </span>
     </router-link>
 

@@ -3,10 +3,10 @@
     <div class="login-card">
       <!-- Logo -->
       <div class="login-logo">
-        <div class="logo-badge serif">溯源</div>
+        <div class="logo-badge serif">魂</div>
         <div class="logo-text">
           <div class="logo-title serif">SOULHEALTH</div>
-          <div class="logo-subtitle">中医辨证溯源 · AI 全维度诊疗</div>
+          <div class="logo-subtitle">AI 健康科研平台 · 辨证溯源 + 生物计算</div>
         </div>
       </div>
 
@@ -19,26 +19,26 @@
       <!-- 表单 -->
       <form @submit.prevent="handleSubmit" class="auth-form">
         <div class="form-group">
-          <label>手机号 / 账号</label>
-          <input v-model="phone" type="tel" placeholder="请输入手机号" maxlength="11" required autocomplete="tel" />
+          <label>用户名</label>
+          <input v-model="username" type="text" placeholder="请输入用户名" maxlength="30" required autocomplete="username" />
         </div>
 
         <div v-if="mode === 'register'" class="form-group">
-          <label>昵称 (选填)</label>
-          <input v-model="nickname" type="text" placeholder="给自己起个名字" maxlength="20" />
+          <label>显示名（选填）</label>
+          <input v-model="displayName" type="text" placeholder="给自己起个名字" maxlength="20" />
         </div>
 
         <div class="form-group">
           <label>密码</label>
           <div class="password-wrap">
-            <input v-model="password" :type="showPw ? 'text' : 'password'" placeholder="请输入密码" minlength="4" required autocomplete="current-password" />
+            <input v-model="password" :type="showPw ? 'text' : 'password'" placeholder="请输入密码（至少 6 位）" minlength="6" required autocomplete="current-password" />
             <button type="button" class="eye-btn" @click="showPw = !showPw">{{ showPw ? '🙈' : '👁' }}</button>
           </div>
         </div>
 
         <div v-if="mode === 'register'" class="form-group">
           <label>确认密码</label>
-          <input v-model="confirmPw" :type="showPw ? 'text' : 'password'" placeholder="再次输入密码" minlength="4" required />
+          <input v-model="confirmPw" :type="showPw ? 'text' : 'password'" placeholder="再次输入密码" minlength="6" required />
         </div>
 
         <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
@@ -54,7 +54,7 @@
       </div>
 
       <div class="login-disclaimer">
-        <p>🔒 密码经 bcrypt 加密存储 · JWT 安全令牌 · 病历数据隔离</p>
+        <p>🔒 密码 bcrypt 加密 · JWT 令牌 · 数据隔离 · 管理员/普通用户 RBAC</p>
       </div>
     </div>
   </div>
@@ -69,31 +69,35 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const mode = ref('login')
-const phone = ref('')
+const username = ref('')
 const password = ref('')
 const confirmPw = ref('')
-const nickname = ref('')
+const displayName = ref('')
 const showPw = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
 
 async function handleSubmit() {
   errorMsg.value = ''
-  if (!phone.value || !password.value) {
-    errorMsg.value = '请填写手机号和密码'
+  if (!username.value || !password.value) {
+    errorMsg.value = '请填写用户名和密码'
     return
   }
   if (mode.value === 'register' && password.value !== confirmPw.value) {
     errorMsg.value = '两次密码输入不一致'
     return
   }
+  if (mode.value === 'register' && password.value.length < 6) {
+    errorMsg.value = '密码至少 6 位'
+    return
+  }
 
   loading.value = true
   try {
     if (mode.value === 'register') {
-      await auth.register(phone.value, password.value, nickname.value)
+      await auth.register(username.value, password.value, displayName.value)
     } else {
-      await auth.login(phone.value, password.value)
+      await auth.login(username.value, password.value)
     }
     // 登录成功，跳转首页
     router.push('/')
